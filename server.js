@@ -44,15 +44,16 @@ app.post("/query", async (req, res) => {
     const query = `Analyze the etymology of the word "${req.body.query}" and provide a response in the following JSON structure:
     {
       "oldest_root": {
-        "word": "Write the oldest known root word (preferably Indo-European if applicable)",
+        "word": "Write the oldest known root word (preferably proto-Indo-European root if applicable, really try to go back to the indo-european root)",
         "language": "Specify the language of this root word",
         "meaning": "Provide the original meaning of this root word"
       },
-      "evolution": "Describe how the word evolved through time, listing the major changes and languages it passed through (return as a single text string)",
-      "related_words": "List and describe related words that share this root, both in the original language and other languages (return as a single text string)"
+      "evolution": "Describe how the word evolved through time, listing the major changes and languages it passed through",
+      "related_words": "List and describe related words that share this root, both in the original language and other languages"
     }
     
-    Important: The oldest_root should be an object with exactly these three fields, while the other fields remain as strings.`;
+    Important: The oldest_root MUST be a JSON object with exactly these three fields as shown above, not a string. The evolution and related_words should be strings.
+    Do not include any additional fields or nested objects.`;
 
     const completion = await openai.chat.completions.create({
       messages: [{ role: "user", content: query }],
@@ -74,12 +75,37 @@ app.post("/query", async (req, res) => {
       }
     }
 
-    // Ensure all fields are strings
-    Object.keys(response).forEach((key) => {
-      if (typeof response[key] !== "string") {
-        response[key] = JSON.stringify(response[key], null, 2);
+    // Parse oldest_root if it's a string
+    if (typeof response.oldest_root === "string") {
+      try {
+        response.oldest_root = JSON.parse(response.oldest_root);
+      } catch (e) {
+        console.error("Failed to parse oldest_root:", response.oldest_root);
+        throw new Error("Invalid oldest_root format");
       }
-    });
+    }
+
+    console.log("Parsed oldest_root:", response.oldest_root);
+
+    // Validate oldest_root structure
+    if (!response.oldest_root || typeof response.oldest_root !== "object") {
+      throw new Error("oldest_root must be an object");
+    }
+
+    const requiredRootFields = ["word", "language", "meaning"];
+    for (const field of requiredRootFields) {
+      if (!(field in response.oldest_root)) {
+        throw new Error(`Missing required field in oldest_root: ${field}`);
+      }
+    }
+
+    // Only convert specific fields to strings if needed
+    if (typeof response.evolution !== "string") {
+      response.evolution = JSON.stringify(response.evolution, null, 2);
+    }
+    if (typeof response.related_words !== "string") {
+      response.related_words = JSON.stringify(response.related_words, null, 2);
+    }
 
     res.json(response);
   } catch (error) {
@@ -89,7 +115,6 @@ app.post("/query", async (req, res) => {
       query: req.body.query,
     });
 
-    // Send more specific error messages to client
     res.status(500).json({
       error: "Failed to process query",
       details:
