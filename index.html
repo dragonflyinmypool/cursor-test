@@ -77,6 +77,7 @@
             background: #2d2d2d;
             padding: 1.5rem;
             border-radius: 5px;
+            overflow: auto;
         }
 
         .column h2 {
@@ -88,6 +89,29 @@
         .column p {
             color: #e0e0e0;
             white-space: pre-line;
+        }
+
+        .root-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+
+        .root-table th {
+            background: #1e1e1e;
+            color: #7c5dfa;
+            text-align: left;
+            padding: 0.8rem;
+            border-bottom: 2px solid #444;
+        }
+
+        .root-table td {
+            padding: 0.8rem;
+            border-bottom: 1px solid #444;
+        }
+
+        .root-table tr:last-child td {
+            border-bottom: none;
         }
     </style>
 </head>
@@ -106,7 +130,18 @@
         <div id="results" class="results">
             <div class="column">
                 <h2>Original Root</h2>
-                <p id="rootContent"></p>
+                <table class="root-table">
+                    <tr>
+                        <th>Root Word</th>
+                        <th>Language</th>
+                        <th>Meaning</th>
+                    </tr>
+                    <tr>
+                        <td id="rootWord"></td>
+                        <td id="rootLanguage"></td>
+                        <td id="rootMeaning"></td>
+                    </tr>
+                </table>
             </div>
             <div class="column">
                 <h2>Evolution</h2>
@@ -124,7 +159,9 @@
         const input = document.getElementById('queryInput');
         const loading = document.getElementById('loading');
         const results = document.getElementById('results');
-        const rootContent = document.getElementById('rootContent');
+        const rootWord = document.getElementById('rootWord');
+        const rootLanguage = document.getElementById('rootLanguage');
+        const rootMeaning = document.getElementById('rootMeaning');
         const evolutionContent = document.getElementById('evolutionContent');
         const relatedContent = document.getElementById('relatedContent');
 
@@ -148,14 +185,19 @@
                 
                 const data = await res.json();
                 
-                rootContent.textContent = data.oldest_root;
+                rootWord.textContent = data.oldest_root.word;
+                rootLanguage.textContent = data.oldest_root.language;
+                rootMeaning.textContent = data.oldest_root.meaning;
+
                 evolutionContent.textContent = data.evolution;
                 relatedContent.textContent = data.related_words;
 
                 results.style.display = 'grid';
             } catch (error) {
                 console.error('Error:', error);
-                rootContent.textContent = 'Error: Could not process your request';
+                rootWord.textContent = 'Error';
+                rootLanguage.textContent = 'Error';
+                rootMeaning.textContent = 'Could not process your request';
                 results.style.display = 'grid';
             } finally {
                 loading.style.display = 'none';
