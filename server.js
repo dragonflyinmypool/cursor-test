@@ -43,12 +43,16 @@ app.post("/query", async (req, res) => {
 
     const query = `Analyze the etymology of the word "${req.body.query}" and provide a response in the following JSON structure:
     {
-      "oldest_root": "Describe the oldest known root of this word, including its original meaning and language (return as a single text string)",
+      "oldest_root": {
+        "word": "Write the oldest known root word (preferably Indo-European if applicable)",
+        "language": "Specify the language of this root word",
+        "meaning": "Provide the original meaning of this root word"
+      },
       "evolution": "Describe how the word evolved through time, listing the major changes and languages it passed through (return as a single text string)",
       "related_words": "List and describe related words that share this root, both in the original language and other languages (return as a single text string)"
     }
     
-    Important: Each field must be a simple text string, not an object or array. Format the text with line breaks where needed.`;
+    Important: The oldest_root should be an object with exactly these three fields, while the other fields remain as strings.`;
 
     const completion = await openai.chat.completions.create({
       messages: [{ role: "user", content: query }],
