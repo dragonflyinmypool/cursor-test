@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Node Project</title>
+    <title>Etymology Explorer</title>
     <style>
         * {
             margin: 0;
@@ -16,39 +16,151 @@
             background-color: #121212;
             color: #ffffff;
             line-height: 1.6;
+            min-height: 100vh;
+            padding: 2rem;
         }
 
         .container {
-            max-width: 1200px;
+            width: 100%;
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 2rem;
-            text-align: center;
         }
 
-        h1 {
-            color: #7c5dfa;
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-        }
-
-        p {
-            color: #e0e0e0;
+        .search-box {
+            display: flex;
+            gap: 0.5rem;
             margin-bottom: 2rem;
         }
 
-        .status {
-            background: #2d2d2d;
+        input {
+            flex: 1;
             padding: 1rem;
+            border: none;
             border-radius: 5px;
-            display: inline-block;
+            background: #2d2d2d;
+            color: #ffffff;
+            font-size: 1rem;
+            max-width: 600px;
+        }
+
+        input:focus {
+            outline: 1px solid #7c5dfa;
+        }
+
+        button {
+            padding: 1rem 2rem;
+            background: #7c5dfa;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        button:hover {
+            background: #6b48ff;
+        }
+
+        .loading {
+            color: #7c5dfa;
+            display: none;
+            margin-bottom: 2rem;
+        }
+
+        .results {
+            display: none;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+
+        .column {
+            background: #2d2d2d;
+            padding: 1.5rem;
+            border-radius: 5px;
+        }
+
+        .column h2 {
+            color: #7c5dfa;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .column p {
+            color: #e0e0e0;
+            white-space: pre-line;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Node.js Server</h1>
-        <p>Server is running successfully</p>
-        <div class="status">Status: Active</div>
+        <form id="queryForm" class="search-box">
+            <input 
+                type="text" 
+                id="queryInput" 
+                placeholder="Enter a word to explore its etymology..."
+                required
+            >
+            <button type="submit">Explore</button>
+        </form>
+        <div id="loading" class="loading">Exploring etymology...</div>
+        <div id="results" class="results">
+            <div class="column">
+                <h2>Original Root</h2>
+                <p id="rootContent"></p>
+            </div>
+            <div class="column">
+                <h2>Evolution</h2>
+                <p id="evolutionContent"></p>
+            </div>
+            <div class="column">
+                <h2>Related Words</h2>
+                <p id="relatedContent"></p>
+            </div>
+        </div>
     </div>
+
+    <script>
+        const form = document.getElementById('queryForm');
+        const input = document.getElementById('queryInput');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+        const rootContent = document.getElementById('rootContent');
+        const evolutionContent = document.getElementById('evolutionContent');
+        const relatedContent = document.getElementById('relatedContent');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const query = input.value.trim();
+            
+            if (!query) return;
+
+            loading.style.display = 'block';
+            results.style.display = 'none';
+            
+            try {
+                const res = await fetch('/query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query })
+                });
+                
+                const data = await res.json();
+                
+                rootContent.textContent = data.oldest_root;
+                evolutionContent.textContent = data.evolution;
+                relatedContent.textContent = data.related_words;
+
+                results.style.display = 'grid';
+            } catch (error) {
+                console.error('Error:', error);
+                rootContent.textContent = 'Error: Could not process your request';
+                results.style.display = 'grid';
+            } finally {
+                loading.style.display = 'none';
+            }
+        });
+    </script>
 </body>
 </html>
