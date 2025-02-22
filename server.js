@@ -26,10 +26,10 @@ app.post("/query", async (req, res) => {
     messages: [
       { role: "user", content: createEtymologyPrompt(req.body.query) },
     ],
-    model: "gpt-3.5-turbo-1106",
+    model: "gpt-4o-mini",
     response_format: { type: "json_object" },
     max_tokens: 1000,
-    temperature: 0.8,
+    temperature: 0.3,
   });
 
   const response = JSON.parse(completion.choices[0].message.content);
