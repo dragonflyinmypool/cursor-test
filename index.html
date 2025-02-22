@@ -17,7 +17,7 @@
             color: #ffffff;
             line-height: 1.6;
             min-height: 100vh;
-            padding: 2rem;
+            padding: 1rem;
         }
 
         .container {
@@ -30,6 +30,7 @@
             display: flex;
             gap: 0.5rem;
             margin-bottom: 2rem;
+            flex-wrap: wrap;
         }
 
         input {
@@ -40,7 +41,7 @@
             background: #2d2d2d;
             color: #ffffff;
             font-size: 1rem;
-            max-width: 600px;
+            min-width: 200px;
         }
 
         input:focus {
@@ -77,7 +78,8 @@
             background: #2d2d2d;
             padding: 1.5rem;
             border-radius: 5px;
-            overflow: auto;
+            min-height: 200px;
+            height: auto;
         }
 
         .column h2 {
@@ -108,10 +110,43 @@
         .root-table td {
             padding: 0.8rem;
             border-bottom: 1px solid #444;
+            word-break: break-word;
         }
 
         .root-table tr:last-child td {
             border-bottom: none;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 0.5rem;
+            }
+
+            .search-box {
+                flex-direction: column;
+            }
+
+            .search-box input {
+                width: 100%;
+            }
+
+            .results {
+                grid-template-columns: 1fr;
+            }
+
+            .column {
+                min-height: auto;
+                max-height: none;
+            }
+
+            .root-table {
+                font-size: 0.9rem;
+            }
+
+            .root-table th, 
+            .root-table td {
+                padding: 0.6rem;
+            }
         }
     </style>
 </head>
@@ -129,16 +164,17 @@
         <div id="loading" class="loading">Exploring etymology...</div>
         <div id="results" class="results">
             <div class="column">
-                <h2>Original Root</h2>
                 <table class="root-table">
                     <tr>
                         <th>Root Word</th>
                         <th>Language</th>
+                        <th>Pronunciation</th>
                         <th>Meaning</th>
                     </tr>
                     <tr>
                         <td id="rootWord"></td>
                         <td id="rootLanguage"></td>
+                        <td id="rootPronunciation"></td>
                         <td id="rootMeaning"></td>
                     </tr>
                 </table>
@@ -161,6 +197,7 @@
         const results = document.getElementById('results');
         const rootWord = document.getElementById('rootWord');
         const rootLanguage = document.getElementById('rootLanguage');
+        const rootPronunciation = document.getElementById('rootPronunciation');
         const rootMeaning = document.getElementById('rootMeaning');
         const evolutionContent = document.getElementById('evolutionContent');
         const relatedContent = document.getElementById('relatedContent');
@@ -168,40 +205,28 @@
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const query = input.value.trim();
-            
             if (!query) return;
 
             loading.style.display = 'block';
             results.style.display = 'none';
             
-            try {
-                const res = await fetch('/query', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ query })
-                });
-                
-                const data = await res.json();
-                
-                rootWord.textContent = data.oldest_root.word;
-                rootLanguage.textContent = data.oldest_root.language;
-                rootMeaning.textContent = data.oldest_root.meaning;
+            const res = await fetch('/query', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query })
+            });
+            
+            const data = await res.json();
+            
+            rootWord.textContent = data.oldest_root.word;
+            rootLanguage.textContent = data.oldest_root.language;
+            rootPronunciation.textContent = data.oldest_root.pronunciation;
+            rootMeaning.textContent = data.oldest_root.meaning;
+            evolutionContent.textContent = data.evolution;
+            relatedContent.textContent = data.related_words;
 
-                evolutionContent.textContent = data.evolution;
-                relatedContent.textContent = data.related_words;
-
-                results.style.display = 'grid';
-            } catch (error) {
-                console.error('Error:', error);
-                rootWord.textContent = 'Error';
-                rootLanguage.textContent = 'Error';
-                rootMeaning.textContent = 'Could not process your request';
-                results.style.display = 'grid';
-            } finally {
-                loading.style.display = 'none';
-            }
+            loading.style.display = 'none';
+            results.style.display = 'grid';
         });
     </script>
 </body>
